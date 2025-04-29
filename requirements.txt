@@ -1,0 +1,3 @@
+albumentations
+argparse
+opencv-python
