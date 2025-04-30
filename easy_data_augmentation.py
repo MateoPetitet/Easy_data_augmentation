@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     break #Skip if not an image
                 im = cv2.imread(image_path)
                 if im is None:
-                    break  #Skip if not an image
+                    continue  #Skip if not an image
                 h, l= im.shape[:2]
                 Rotations_90_flip, Crop_Move, Rotation, Transformations, Freres_couleur_Couleur_Lumiere, Flou, Bruits_Particules_Objets = generate_transfo(h, l, args.no_transfo)
                 keep=[]
