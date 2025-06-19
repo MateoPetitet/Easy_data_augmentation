@@ -26,7 +26,9 @@ All optional parameters are controlled by 0 or 1 except for **- -nb**. They all 
  All the transformations happens in the same order. It is the most logical for our use case in marine biology.
 
 **- -path** Path to the dataset directory
+
 **- -nb (optional)** The number of new pictures to generate per picture. If not precised, all possible pictures will be generated.
+
 **- -flips (optional)** Add 90° flips rotations and mirrors to the transformations, except the one that would put the fish on its back (assuming it is in the correct orientation in the picture). Uses : 
 > - Transpose(p=1.0), A.HorizontalFlip(p=1.0)
 > - Transpose(p=1.0), VerticalFlip(p=1.0)
