@@ -56,7 +56,7 @@ def generate_transfo(hauteur, largeur, pas_transfo):
                      [A.Morphological(scale=(2, 3), operation='dilation', p=1.0)],
                      [A.OpticalDistortion(distort_limit=0.3, mode='fisheye', p=1.0)],
                      [A.OpticalDistortion(distort_limit=0.3, mode='camera', p=1.0)],
-                     [A.Perspective(scale=(0.05, 0.1), keep_size=True, p=1.0)],
+                     [A.Perspective(scale=(0.05, 0.2), keep_size=True, p=1.0)],
                      [A.ThinPlateSpline(scale_range=(0.1, 0.2), num_control_points=3, p=1.0)]]
     if pas_transfo==0:
         Transformations.pop(0)
