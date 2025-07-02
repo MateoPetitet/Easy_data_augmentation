@@ -11,10 +11,11 @@ import itertools
 from concurrent.futures import ProcessPoolExecutor
 import argparse
 import random
+import numpy as np
 
 
 #pipeline choisie : (Rotations90_flips|Ø)(Crop|Ø)(Rotation|Ø)(Transformation|Ø)(Couleur|Frères_couleurs|Lumière|Ø)(Flous|Ø)(Bruits|Particules/Objets|Ø)
-def generate_transfo(hauteur, largeur, pas_transfo):
+def generate_transfo(hauteur, largeur, pas_transfo, col):
     #Transformations albumentations
 
     Rotations_90_flip = [[A.NoOp(p=1.0)],
@@ -31,12 +32,12 @@ def generate_transfo(hauteur, largeur, pas_transfo):
     Crop_Move = [[A.NoOp(p=1.0)],
             [A.CenterCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
             [A.RandomCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
-            [A.Affine(translate_percent=(-0.25, 0.25), p=1.0)]]
+            [A.Affine(translate_percent=(-0.25, 0.25), fill=col, p=1.0)]]
     if pas_transfo==0:
         Crop_Move.pop(0)
 
     Rotation=[[A.NoOp(p=1.0)],
-              [A.Rotate(limit=45, p=1.0)]]
+              [A.Rotate(limit=45, fill=col, p=1.0)]]
     if pas_transfo==0:
         Rotation.pop(0)
 
@@ -47,17 +48,17 @@ def generate_transfo(hauteur, largeur, pas_transfo):
                      [A.ImageCompression(quality_range=(5, 30), compression_type='jpeg', p=1.0)],
                      [A.ImageCompression(quality_range=(1, 20), compression_type='webp', p=1.0)],
                      [A.Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.0), method='kernel', p=1.0)],
-                     [A.ElasticTransform(alpha=40, sigma=40, p=1.0)],
-                     [A.GridDistortion(num_steps=5, distort_limit=0.1, p=1.0)],
-                     [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, p=1.0)],
+                     [A.ElasticTransform(alpha=40, sigma=40, fill=col, p=1.0)],
+                     [A.GridDistortion(num_steps=5, distort_limit=0.1, fill=col, p=1.0)],
+                     [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, fill=col, p=1.0)],
                      [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*0.5))],
                      [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*2))],
                      [A.Morphological(scale=(2, 3), operation='erosion', p=1.0)],
                      [A.Morphological(scale=(2, 3), operation='dilation', p=1.0)],
-                     [A.OpticalDistortion(distort_limit=0.3, mode='fisheye', p=1.0)],
-                     [A.OpticalDistortion(distort_limit=0.3, mode='camera', p=1.0)],
-                     [A.Perspective(scale=(0.05, 0.2), keep_size=True, p=1.0)],
-                     [A.ThinPlateSpline(scale_range=(0.1, 0.2), num_control_points=3, p=1.0)]]
+                     [A.OpticalDistortion(distort_limit=0.3, fill=col, mode='fisheye', p=1.0)],
+                     [A.OpticalDistortion(distort_limit=0.3, fill=col, mode='camera', p=1.0)],
+                     [A.Perspective(scale=(0.05, 0.2), keep_size=True, fill=col, p=1.0)],
+                     [A.ThinPlateSpline(scale_range=(0.1, 0.2), num_control_points=3, fill=col, p=1.0)]]
     if pas_transfo==0:
         Transformations.pop(0)
 
@@ -155,7 +156,10 @@ if __name__ == '__main__':
                 if im is None:
                     continue  #Skip if not an image
                 h, l= im.shape[:2]
-                Rotations_90_flip, Crop_Move, Rotation, Transformations, Freres_couleur_Couleur_Lumiere, Flou, Bruits_Particules_Objets = generate_transfo(h, l, args.no_transfo)
+                #couleur moyenne pour le padding quand nécessaire
+                img_array = np.array(im)
+                avg_color = np.mean(img_array, axis=(0, 1)).astype(np.uint8)
+                Rotations_90_flip, Crop_Move, Rotation, Transformations, Freres_couleur_Couleur_Lumiere, Flou, Bruits_Particules_Objets = generate_transfo(h, l, args.no_transfo, avg_color)
                 keep=[]
                 if args.flips==1:
                     keep.append(Rotations_90_flip)
