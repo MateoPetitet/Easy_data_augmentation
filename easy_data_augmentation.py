@@ -50,7 +50,7 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
                      [A.Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.0), method='kernel', p=1.0)],
                      [A.ElasticTransform(alpha=40, sigma=40, fill=col, p=1.0)],
                      [A.GridDistortion(num_steps=5, distort_limit=0.1, fill=col, p=1.0)],
-                     [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, fill=col, p=1.0)],
+                     [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, p=1.0)],
                      [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*0.5))],
                      [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*2))],
                      [A.Morphological(scale=(2, 3), operation='erosion', p=1.0)],
@@ -110,7 +110,7 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
 def apply_transformations(combinaison, picture, output_dir, index, hauteur, largeur):
     augmented_image = picture
     #Solve crop calculated before potential transpose
-    if len(combinaison)<1:
+    if len(combinaison) >1:
         if 'Transpose' in str(combinaison[0][0]) and 'Crop' in str(combinaison[1][0]):
             if 'Center' in str(combinaison[1][0]):
                 combinaison[1][0] = A.CenterCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
