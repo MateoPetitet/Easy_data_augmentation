@@ -6,26 +6,23 @@ Created on Tue Jul  1 10:55:36 2025
 # -*- coding: utf-8 -*-
 import cv2
 import albumentations as A
-import matplotlib.pyplot as plt
+import os
 import numpy as np
 
 
-def apply_transformations(combinaison, picture):
+def apply_transformations(combinaison, picture, output):
+    n=1
     for i, list_transform in enumerate(combinaison):
         augmented_image = picture.copy()  #copie pour conserver l'originale
         for transform in list_transform:
             augmented_image = transform(image=augmented_image)["image"]
-        
-        #une nouvelle figure pour chaque résultat
-        plt.figure(i, frameon=False)  # identifiant unique par index + pas de bordure
-        plt.imshow(augmented_image)
-        plt.axis('off')
-        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Marges à zéro
-    plt.show()
+        output_image_path = os.path.join(output, f"exemple_{n}.jpg")
+        cv2.imwrite(output_image_path, augmented_image)
+        n+=1
+
 
 
 img = cv2.imread("/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/OG.jpg")
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 hauteur, largeur = img.shape[:2]
 img_array = np.array(img)
 avg_color = np.mean(img_array, axis=(0, 1)).astype(np.uint8)
@@ -36,18 +33,18 @@ Rotations_90_flip = [[A.Transpose(p=1.0), A.HorizontalFlip(p=1.0), A.Resize(larg
                      [A.Transpose(p=1.0), A.Rotate(limit=[180,180], p=1.0), A.Resize(largeur, hauteur)],
                      [A.Transpose(p=1.0), A.Resize(largeur, hauteur)]]
 
-#apply_transformations(Rotations_90_flip, img)
+apply_transformations(Rotations_90_flip, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/r90flip")
 
 Crop_Move = [[A.CenterCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
         [A.RandomCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
         [A.Affine(translate_percent=(-0.25, -0.25), fill=avg_color, p=1.0)],
         [A.Affine(translate_percent=(0.25, 0.25), fill=avg_color, p=1.0)]]
 
-#apply_transformations(Crop_Move, img)
+apply_transformations(Crop_Move, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/crop_move")
 
 Rotation=[[A.Rotate(limit=45, fill=avg_color, p=1.0)]]
 
-#apply_transformations(Rotation, img)
+apply_transformations(Rotation, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/rotation")
 
 Transformations=[[A.ChromaticAberration(primary_distortion_limit=0.9, secondary_distortion_limit=0.9, mode='random', interpolation=cv2.INTER_LINEAR, p=1.0)],
                  [A.Downscale(scale_range=(0.1, 0.1), interpolation_pair={'downscale': cv2.INTER_NEAREST, 'upscale': cv2.INTER_LINEAR}, p=1.0)],
@@ -67,7 +64,7 @@ Transformations=[[A.ChromaticAberration(primary_distortion_limit=0.9, secondary_
                  [A.Perspective(scale=(0.2, 0.2), keep_size=True, fill=avg_color, p=1.0)],
                  [A.ThinPlateSpline(scale_range=(0.2, 0.2), num_control_points=3, fill=avg_color, p=1.0)]]
 
-apply_transformations(Transformations, img)
+apply_transformations(Transformations, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/transformations")
 
 Freres_couleur_Couleur_Lumiere = [[A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=10, val_shift_limit=10, p=1.0)],
                    [A.Illumination(mode='linear', intensity_range=(0.2, 0.2), effect_type='darken', angle_range=(0, 180), p=1.0)],
@@ -77,7 +74,7 @@ Freres_couleur_Couleur_Lumiere = [[A.HueSaturationValue(hue_shift_limit=10, sat_
                    [A.RGBShift(r_shift_limit=30, g_shift_limit=30,b_shift_limit=30, p=1.0)],
                    [A.Posterize(num_bits=(3,3), p=1.0)]]
 
-#apply_transformations(Freres_couleur_Couleur_Lumiere, img)
+apply_transformations(Freres_couleur_Couleur_Lumiere, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/couleur_lumiere")
 
 Flou = [[A.Defocus(radius=(4, 6), alias_blur=(0.4, 0.4), p=1.0)],
          [A.ZoomBlur(max_factor=1.1, p=1)],
@@ -85,7 +82,7 @@ Flou = [[A.Defocus(radius=(4, 6), alias_blur=(0.4, 0.4), p=1.0)],
          [A.MotionBlur(blur_limit=(5,21), p=1.0)],
          [A.GlassBlur(sigma=0.7, max_delta=1, iterations=2, mode="fast", p=1)]]
 
-#apply_transformations(Flou, img)
+apply_transformations(Flou, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/flous")
 
 Bruits_Particules_Objets = [[A.GaussNoise(std_range=(0.1, 0.1), p=1.0)],
                             [A.SaltAndPepper(amount=(0.05, 0.1), p=1.0)],
@@ -102,4 +99,4 @@ Bruits_Particules_Objets = [[A.GaussNoise(std_range=(0.1, 0.1), p=1.0)],
                             [A.GridDropout(ratio=0.2, p=1.0)],
                             [A.Erasing(scale=(0.2, 0.5), ratio=(0.5, 2.0), p=1.0)]]
 
-#apply_transformations(Bruits_Particules_Objets, img)
+apply_transformations(Bruits_Particules_Objets, img, "/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/bruit_particules")
