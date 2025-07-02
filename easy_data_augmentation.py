@@ -156,7 +156,7 @@ if __name__ == '__main__':
                 if im is None:
                     continue  #Skip if not an image
                 h, l= im.shape[:2]
-                #couleur moyenne pour le padding quand nécessaire
+                #couleur moyenne pour le remplissage quand nécessaire
                 img_array = np.array(im)
                 avg_color = np.mean(img_array, axis=(0, 1)).astype(np.uint8)
                 Rotations_90_flip, Crop_Move, Rotation, Transformations, Freres_couleur_Couleur_Lumiere, Flou, Bruits_Particules_Objets = generate_transfo(h, l, args.no_transfo, avg_color)

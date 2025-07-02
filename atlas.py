@@ -7,6 +7,7 @@ Created on Tue Jul  1 10:55:36 2025
 import cv2
 import albumentations as A
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def apply_transformations(combinaison, picture):
@@ -26,6 +27,8 @@ def apply_transformations(combinaison, picture):
 img = cv2.imread("/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/OG.jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 hauteur, largeur = img.shape[:2]
+img_array = np.array(img)
+avg_color = np.mean(img_array, axis=(0, 1)).astype(np.uint8)
 
 Rotations_90_flip = [[A.Transpose(p=1.0), A.HorizontalFlip(p=1.0), A.Resize(largeur, hauteur)],
                      [A.Transpose(p=1.0), A.VerticalFlip(p=1.0), A.Resize(largeur, hauteur)],
@@ -33,16 +36,16 @@ Rotations_90_flip = [[A.Transpose(p=1.0), A.HorizontalFlip(p=1.0), A.Resize(larg
                      [A.Transpose(p=1.0), A.Rotate(limit=[180,180], p=1.0), A.Resize(largeur, hauteur)],
                      [A.Transpose(p=1.0), A.Resize(largeur, hauteur)]]
 
-apply_transformations(Rotations_90_flip, img)
+#apply_transformations(Rotations_90_flip, img)
 
 Crop_Move = [[A.CenterCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
         [A.RandomCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
-        [A.Affine(translate_percent=(-0.25, -0.25), p=1.0)],
-        [A.Affine(translate_percent=(0.25, 0.25), p=1.0)]]
+        [A.Affine(translate_percent=(-0.25, -0.25), fill=avg_color, p=1.0)],
+        [A.Affine(translate_percent=(0.25, 0.25), fill=avg_color, p=1.0)]]
 
 #apply_transformations(Crop_Move, img)
 
-Rotation=[[A.Rotate(limit=45, p=1.0)]]
+Rotation=[[A.Rotate(limit=45, fill=avg_color, p=1.0)]]
 
 #apply_transformations(Rotation, img)
 
@@ -52,19 +55,19 @@ Transformations=[[A.ChromaticAberration(primary_distortion_limit=0.9, secondary_
                  [A.ImageCompression(quality_range=(5, 5), compression_type='jpeg', p=1.0)],
                  [A.ImageCompression(quality_range=(1, 1), compression_type='webp', p=1.0)],
                  [A.Sharpen(alpha=(0.4, 0.5), lightness=(1.0, 1.0), method='kernel', p=1.0)],
-                 [A.ElasticTransform(alpha=40, sigma=40, p=1.0)],
-                 [A.GridDistortion(num_steps=5, distort_limit=0.1, p=1.0)],
+                 [A.ElasticTransform(alpha=40, sigma=40, fill=avg_color, p=1.0)],
+                 [A.GridDistortion(num_steps=5, distort_limit=0.1, fill=avg_color, p=1.0)],
                  [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, p=1.0)],
                  [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*0.5))],
                  [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*2))],
                  [A.Morphological(scale=(3, 3), operation='erosion', p=1.0)],
                  [A.Morphological(scale=(3, 3), operation='dilation', p=1.0)],
-                 [A.OpticalDistortion(distort_limit=0.3, mode='fisheye', p=1.0)],
-                 [A.OpticalDistortion(distort_limit=0.3, mode='camera', p=1.0)],
-                 [A.Perspective(scale=(0.2, 0.2), keep_size=True, p=1.0)],
-                 [A.ThinPlateSpline(scale_range=(0.2, 0.2), num_control_points=3, p=1.0)]]
+                 [A.OpticalDistortion(distort_limit=0.3, mode='fisheye', fill=avg_color, p=1.0)],
+                 [A.OpticalDistortion(distort_limit=0.3, mode='camera', fill=avg_color, p=1.0)],
+                 [A.Perspective(scale=(0.2, 0.2), keep_size=True, fill=avg_color, p=1.0)],
+                 [A.ThinPlateSpline(scale_range=(0.2, 0.2), num_control_points=3, fill=avg_color, p=1.0)]]
 
-#apply_transformations(Transformations, img)
+apply_transformations(Transformations, img)
 
 Freres_couleur_Couleur_Lumiere = [[A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=10, val_shift_limit=10, p=1.0)],
                    [A.Illumination(mode='linear', intensity_range=(0.2, 0.2), effect_type='darken', angle_range=(0, 180), p=1.0)],
