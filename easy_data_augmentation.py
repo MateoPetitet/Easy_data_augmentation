@@ -109,15 +109,16 @@ def generate_transfo(hauteur, largeur, pas_transfo):
 def apply_transformations(combinaison, picture, output_dir, index, hauteur, largeur):
     augmented_image = picture
     #Solve crop calculated before potential transpose
-    if 'Transpose' in str(combinaison[0][0]) and 'Crop' in str(combinaison[1][0]):
-        if 'Center' in str(combinaison[1][0]):
-            combinaison[1][0] = A.CenterCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
-        else :
-            combinaison[1][0] = A.RandomCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
+    if len(combinaison)<1:
+        if 'Transpose' in str(combinaison[0][0]) and 'Crop' in str(combinaison[1][0]):
+            if 'Center' in str(combinaison[1][0]):
+                combinaison[1][0] = A.CenterCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
+            else :
+                combinaison[1][0] = A.RandomCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
     for list_transform in combinaison :
         for transform in list_transform:
             augmented_image = transform(image=augmented_image)["image"]
-    output_image_path = os.path.join(output_dir, f"augmented_{index}.png")
+    output_image_path = os.path.join(output_dir, f"augmented_{index}.jpg")
     cv2.imwrite(output_image_path, augmented_image)
 
 

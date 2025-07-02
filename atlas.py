@@ -19,22 +19,21 @@ def apply_transformations(combinaison, picture):
         plt.figure(i, frameon=False)  # identifiant unique par index + pas de bordure
         plt.imshow(augmented_image)
         plt.axis('off')
-
-    
-    plt.show()  # Afficher toutes les figures ensemble
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Marges à zéro
+    plt.show()
 
 
 img = cv2.imread("/home/mateo/Travail/Data_Augmentation/Easy_data_augmentation/atlas_transformations/images/OG.jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 hauteur, largeur = img.shape[:2]
 
-Rotations_90_flip = [[A.Transpose(p=1.0), A.HorizontalFlip(p=1.0)],
-                     [A.Transpose(p=1.0), A.VerticalFlip(p=1.0)],
-                     [A.HorizontalFlip(p=1.0)],
-                     [A.Transpose(p=1.0), A.Rotate(limit=[180,180], p=1.0)],
-                     [A.Transpose(p=1.0)]]
+Rotations_90_flip = [[A.Transpose(p=1.0), A.HorizontalFlip(p=1.0), A.Resize(largeur, hauteur)],
+                     [A.Transpose(p=1.0), A.VerticalFlip(p=1.0), A.Resize(largeur, hauteur)],
+                     [A.HorizontalFlip(p=1.0), A.Resize(hauteur, largeur)],
+                     [A.Transpose(p=1.0), A.Rotate(limit=[180,180], p=1.0), A.Resize(largeur, hauteur)],
+                     [A.Transpose(p=1.0), A.Resize(largeur, hauteur)]]
 
-#apply_transformations(Rotations_90_flip, img)
+apply_transformations(Rotations_90_flip, img)
 
 Crop_Move = [[A.CenterCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
         [A.RandomCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
@@ -100,4 +99,4 @@ Bruits_Particules_Objets = [[A.GaussNoise(std_range=(0.1, 0.1), p=1.0)],
                             [A.GridDropout(ratio=0.2, p=1.0)],
                             [A.Erasing(scale=(0.2, 0.5), ratio=(0.5, 2.0), p=1.0)]]
 
-apply_transformations(Bruits_Particules_Objets, img)
+#apply_transformations(Bruits_Particules_Objets, img)
