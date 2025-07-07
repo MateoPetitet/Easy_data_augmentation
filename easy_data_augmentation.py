@@ -107,7 +107,7 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
 
     return Rotations_90_flip, Crop_Move, Rotation, Transformations, Freres_couleur_Couleur_Lumiere, Flou, Bruits_Particules_Objets
 
-def apply_transformations(combinaison, picture, output_dir, index, hauteur, largeur):
+def apply_transformations(combinaison, picture, output_dir, index, hauteur, largeur, name):
     augmented_image = picture
     #Solve crop calculated before potential transpose
     if len(combinaison) >1:
@@ -119,7 +119,7 @@ def apply_transformations(combinaison, picture, output_dir, index, hauteur, larg
     for list_transform in combinaison :
         for transform in list_transform:
             augmented_image = transform(image=augmented_image)["image"]
-    output_image_path = os.path.join(output_dir, f"augmented_{index}.jpg")
+    output_image_path = os.path.join(output_dir, f"{name}_augmented_{index}.jpg")
     cv2.imwrite(output_image_path, augmented_image)
 
 
@@ -156,6 +156,7 @@ if __name__ == '__main__':
                 if im is None:
                     continue  #Skip if not an image
                 h, l= im.shape[:2]
+                nom_image=image[:len(image)-4]
                 #couleur moyenne pour le remplissage quand nécessaire
                 img_array = np.array(im)
                 avg_color = np.mean(img_array, axis=(0, 1)).astype(np.uint8)
@@ -184,10 +185,13 @@ if __name__ == '__main__':
                 if args.nb:
                     all_transform=all_transform[:args.nb]
                     print(f"Generating {len(all_transform)} new pictures of {image} among {all_og} transformations possible.")
-                output_dir = os.path.join(dossier_path, f"{image}_extended")
-                os.makedirs(output_dir, exist_ok=True)
+                if args.same_folder == 0:
+                    output_dir = os.path.join(dossier_path, f"{image}_extended")
+                    os.makedirs(output_dir, exist_ok=True)
+                else :
+                    output_dir = dossier_path
                 with ProcessPoolExecutor() as executor:
-                    futures = [executor.submit(apply_transformations, combi, im, output_dir, i, h, l) for i, combi in enumerate(all_transform)]
+                    futures = [executor.submit(apply_transformations, combi, im, output_dir, i, h, l, nom_image) for i, combi in enumerate(all_transform)]
                     for future in futures:
                         future.result() #Attendre la fin de chaque tâche
         if args.test_mode==1:
