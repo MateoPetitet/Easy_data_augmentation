@@ -8,10 +8,29 @@ import os
 import cv2
 import albumentations as A
 import itertools
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 import argparse
 import random
 import numpy as np
+
+# ==== patch générique pour BaseDropout (albumentationsx 2.0.9+) ====
+from albumentations.augmentations.dropout.transforms import BaseDropout
+
+# On conserve la référence à la méthode originale
+_orig_apply = BaseDropout.apply
+
+def _patched_apply(self, img, *args, **kwargs):
+    # Si seed n'est pas passé, on l'ajoute par défaut
+    if 'seed' not in kwargs:
+        kwargs['seed'] = None
+    # On appelle la méthode d'origine avec seed désormais garanti,
+    # et on ignore args supplémentaires (car toutes les sous-classes
+    # injectent seed et autres kwargs via kwargs).
+    return _orig_apply(self, img, **kwargs)
+
+# On remplace BaseDropout.apply par notre version patchée
+BaseDropout.apply = _patched_apply
+# ================================================================================
 
 
 #pipeline choisie : (Rotations90_flips|Ø)(Crop|Ø)(Rotation|Ø)(Transformation|Ø)(Couleur|Frères_couleurs|Lumière|Ø)(Flous|Ø)(Bruits|Particules/Objets|Ø)
@@ -93,10 +112,10 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
                                 [A.ShotNoise(scale_range=(0.05, 0.1), p=1.0)],
                                 [A.PixelDropout(dropout_prob=0.075, per_channel=True, p=1.0)],
                                 [A.RandomFog(fog_coef_range=(0.2, 0.5), alpha_coef=0.1, p=1.0)],
-                                [A.RandomGravel(gravel_roi=(0.2, 0.2, 0.8, 0.8), number_of_patches=5, p=1.0)],
-                                [A.RandomRain(slant_range=(-15, 15), drop_length=30, drop_width=2, drop_color=(180, 180, 180), blur_value=5, brightness_coefficient=0.8, p=1.0)],
+                                #[A.RandomGravel(gravel_roi=(0.2, 0.2, 0.8, 0.8), number_of_patches=5, p=1.0)],
+                                #[A.RandomRain(slant_range=(-15, 15), drop_length=30, drop_width=2, drop_color=(180, 180, 180), blur_value=5, brightness_coefficient=0.8, p=1.0)],
                                 [A.RandomShadow(shadow_roi=(0.01, 0.01, 0.99, 0.99), num_shadows_limit=(1, 4), shadow_dimension=5, shadow_intensity_range=(0.1, 0.6), p=1.0)],
-                                [A.RandomSnow(snow_point_range=(0.01, 0.4), brightness_coeff=2.0, method="texture", p=1.0)],
+                                #[A.RandomSnow(snow_point_range=(0.01, 0.4), brightness_coeff=2.0, method="texture", p=1.0)],
                                 [A.RandomSunFlare(flare_roi=(0.1, 0, 0.9, 0.3), angle_range=(0.25, 0.75), num_flare_circles_range=(5, 15), src_radius=200, src_color=(255, 200, 100), method="physics_based", p=1.0)],
                                 [A.PlasmaShadow(shadow_intensity_range=(0.5, 0.9), roughness=0.3, p=1.0)],
                                 [A.CoarseDropout(num_holes_range=(3, 6), hole_height_range=(0.05, 0.1), hole_width_range=(0.05, 0.1), p=1.0)],
@@ -190,7 +209,7 @@ if __name__ == '__main__':
                     os.makedirs(output_dir, exist_ok=True)
                 else :
                     output_dir = dossier_path
-                with ProcessPoolExecutor() as executor:
+                with ThreadPoolExecutor() as executor:
                     futures = [executor.submit(apply_transformations, combi, im, output_dir, i, h, l, nom_image) for i, combi in enumerate(all_transform)]
                     for future in futures:
                         future.result() #Attendre la fin de chaque tâche
