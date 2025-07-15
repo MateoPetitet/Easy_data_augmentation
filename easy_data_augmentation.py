@@ -61,11 +61,11 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
         Rotation.pop(0)
 
     Transformations=[[A.NoOp(p=1.0)],
-                     [A.ChromaticAberration(primary_distortion_limit=0.9, secondary_distortion_limit=0.9, mode='random', interpolation=cv2.INTER_LINEAR, p=1.0)],
-                     [A.Downscale(scale_range=(0.1, 0.9), interpolation_pair={'downscale': cv2.INTER_NEAREST, 'upscale': cv2.INTER_LINEAR}, p=1.0)],
-                     [A.Emboss(alpha=(0.8, 0.9), strength=(0.8, 1.1), p=1.0)],
-                     [A.ImageCompression(quality_range=(5, 30), compression_type='jpeg', p=1.0)],
-                     [A.ImageCompression(quality_range=(1, 20), compression_type='webp', p=1.0)],
+                     [A.ChromaticAberration(primary_distortion_limit=0.5, secondary_distortion_limit=0.5, mode='random', interpolation=cv2.INTER_LINEAR, p=1.0)],
+                     [A.Downscale(scale_range=(0.6, 0.9), interpolation_pair={'downscale': cv2.INTER_NEAREST, 'upscale': cv2.INTER_LINEAR}, p=1.0)],
+                     #[A.Emboss(alpha=(0.8, 0.9), strength=(0.8, 1.1), p=1.0)],
+                     [A.ImageCompression(quality_range=(25, 30), compression_type='jpeg', p=1.0)],
+                     [A.ImageCompression(quality_range=(15, 20), compression_type='webp', p=1.0)],
                      [A.Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.0), method='kernel', p=1.0)],
                      [A.ElasticTransform(alpha=40, sigma=40, fill=col, p=1.0)],
                      [A.GridDistortion(num_steps=5, distort_limit=0.1, fill=col, p=1.0)],
@@ -77,7 +77,8 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
                      [A.OpticalDistortion(distort_limit=0.3, fill=col, mode='fisheye', p=1.0)],
                      [A.OpticalDistortion(distort_limit=0.3, fill=col, mode='camera', p=1.0)],
                      [A.Perspective(scale=(0.05, 0.2), keep_size=True, fill=col, p=1.0)],
-                     [A.ThinPlateSpline(scale_range=(0.1, 0.2), num_control_points=3, fill=col, p=1.0)]]
+                     #[A.ThinPlateSpline(scale_range=(0.1, 0.2), num_control_points=3, fill=col, p=1.0)]
+                     ]
     if pas_transfo==0:
         Transformations.pop(0)
 
@@ -90,7 +91,8 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
     #[A.ChannelShuffle(p=1.0)],
                        [A.ColorJitter(brightness=(0.9, 1.1), contrast=(0.9, 1.1), saturation=(0.9, 1.1), hue=(-0.05, 0.05), p=1.0)],
                        [A.RGBShift(r_shift_limit=30, g_shift_limit=30,b_shift_limit=30, p=1.0)],
-                       [A.Posterize(num_bits=(3,5), p=1.0)]]
+                       #[A.Posterize(num_bits=(3,5), p=1.0)]
+                       ]
     if pas_transfo==0:
         Freres_couleur_Couleur_Lumiere.pop(0)
 #Pourquoi les Frères couleur ? Pour ça :
@@ -107,16 +109,16 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
 
     Bruits_Particules_Objets = [[A.NoOp(p=1.0)],
     #[A.AdditiveNoise(noise_type="gaussian", spatial_mode="shared", noise_params={"mean_range": (0.0, 0.0), "std_range": (0.05, 0.1)},p=1.0)], #redondant avec le gaussien en dessous
-                                [A.GaussNoise(std_range=(0.05, 0.1), p=1.0)],
-                                [A.SaltAndPepper(amount=(0.05, 0.1), p=1.0)],
-                                [A.ShotNoise(scale_range=(0.05, 0.1), p=1.0)],
-                                [A.PixelDropout(dropout_prob=0.075, per_channel=True, p=1.0)],
+                                [A.GaussNoise(std_range=(0.01, 0.05), p=1.0)],
+                                [A.SaltAndPepper(amount=(0.01, 0.05), p=1.0)],
+                                [A.ShotNoise(scale_range=(0.005, 0.025), p=1.0)],
+                                [A.PixelDropout(dropout_prob=0.025, per_channel=True, p=1.0)],
                                 [A.RandomFog(fog_coef_range=(0.2, 0.5), alpha_coef=0.1, p=1.0)],
-                                #[A.RandomGravel(gravel_roi=(0.2, 0.2, 0.8, 0.8), number_of_patches=5, p=1.0)],
-                                #[A.RandomRain(slant_range=(-15, 15), drop_length=30, drop_width=2, drop_color=(180, 180, 180), blur_value=5, brightness_coefficient=0.8, p=1.0)],
+                                [A.RandomGravel(gravel_roi=(0.2, 0.2, 0.8, 0.8), number_of_patches=5, p=1.0)],
+                                [A.RandomRain(slant_range=(-15, 15), drop_length=15, drop_width=1, drop_color=(200, 200, 200), blur_value=10, brightness_coefficient=0.9, rain_type='drizzle', p=1.0)],
                                 [A.RandomShadow(shadow_roi=(0.01, 0.01, 0.99, 0.99), num_shadows_limit=(1, 4), shadow_dimension=5, shadow_intensity_range=(0.1, 0.6), p=1.0)],
-                                #[A.RandomSnow(snow_point_range=(0.01, 0.4), brightness_coeff=2.0, method="texture", p=1.0)],
-                                [A.RandomSunFlare(flare_roi=(0.1, 0, 0.9, 0.3), angle_range=(0.25, 0.75), num_flare_circles_range=(5, 15), src_radius=200, src_color=(255, 200, 100), method="physics_based", p=1.0)],
+                                [A.RandomSnow(snow_point_range=(0.01, 0.075), brightness_coeff=2.0, method="bleach", p=1.0)],
+                                [A.RandomSunFlare(flare_roi=(0, 0, 1, 1), angle_range=(0.25, 0.75), num_flare_circles_range=(10, 15), src_radius=400, src_color=(255, 200, 200), method="physics_based", p=1.0)],
                                 [A.PlasmaShadow(shadow_intensity_range=(0.5, 0.9), roughness=0.3, p=1.0)],
                                 [A.CoarseDropout(num_holes_range=(3, 6), hole_height_range=(0.05, 0.1), hole_width_range=(0.05, 0.1), p=1.0)],
                                 [A.GridDropout(ratio=0.2, p=1.0)],
