@@ -49,8 +49,8 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
         Rotations_90_flip.pop(0)
 
     Crop_Move = [[A.NoOp(p=1.0)],
-            [A.CenterCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
-            [A.RandomCrop(height=int(hauteur*0.75), width=int(largeur*0.75), p=1.0)],
+            [A.CenterCrop(height=max(2, int(hauteur*0.75)), width=max(2, int(largeur*0.75)), p=1.0)],
+            [A.RandomCrop(height=max(2, int(hauteur*0.75)), width=max(2, int(largeur*0.75)), p=1.0)],
             [A.Affine(translate_percent=(-0.25, 0.25), fill=col, p=1.0)]]
     if pas_transfo==0:
         Crop_Move.pop(0)
@@ -70,8 +70,8 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
                      [A.ElasticTransform(alpha=40, sigma=40, fill=col, p=1.0)],
                      [A.GridDistortion(num_steps=5, distort_limit=0.1, fill=col, p=1.0)],
                      [A.GridElasticDeform(num_grid_xy=(4, 4), magnitude=2, p=1.0)],
-                     [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*0.5))],
-                     [A.LongestMaxSize(max_size=int(max(hauteur,largeur)*2))],
+                     [A.LongestMaxSize(max_size=max(2, int(max(hauteur,largeur)*0.5)))],
+                     [A.LongestMaxSize(max_size=max(2, int(max(hauteur,largeur)*2)))],
                      [A.Morphological(scale=(2, 3), operation='erosion', p=1.0)],
                      [A.Morphological(scale=(2, 3), operation='dilation', p=1.0)],
                      [A.OpticalDistortion(distort_limit=0.3, fill=col, mode='fisheye', p=1.0)],
@@ -109,15 +109,15 @@ def generate_transfo(hauteur, largeur, pas_transfo, col):
 
     Bruits_Particules_Objets = [[A.NoOp(p=1.0)],
     #[A.AdditiveNoise(noise_type="gaussian", spatial_mode="shared", noise_params={"mean_range": (0.0, 0.0), "std_range": (0.05, 0.1)},p=1.0)], #redondant avec le gaussien en dessous
-                                [A.GaussNoise(std_range=(0.01, 0.05), p=1.0)],
-                                [A.SaltAndPepper(amount=(0.01, 0.05), p=1.0)],
-                                [A.ShotNoise(scale_range=(0.005, 0.025), p=1.0)],
-                                [A.PixelDropout(dropout_prob=0.025, per_channel=True, p=1.0)],
-                                [A.RandomFog(fog_coef_range=(0.2, 0.5), alpha_coef=0.1, p=1.0)],
+                                [A.GaussNoise(std_range=(0.001, 0.01), p=1.0)],
+                                [A.SaltAndPepper(amount=(0.001, 0.01), p=1.0)],
+                                [A.ShotNoise(scale_range=(0.001, 0.01), p=1.0)],
+                                [A.PixelDropout(dropout_prob=0.001, per_channel=True, p=1.0)],
+                                [A.RandomFog(fog_coef_range=(0.05, 0.2), alpha_coef=0.025, p=1.0)],
                                 [A.RandomGravel(gravel_roi=(0.2, 0.2, 0.8, 0.8), number_of_patches=5, p=1.0)],
                                 [A.RandomRain(slant_range=(-15, 15), drop_length=15, drop_width=1, drop_color=(200, 200, 200), blur_value=10, brightness_coefficient=0.9, rain_type='drizzle', p=1.0)],
                                 [A.RandomShadow(shadow_roi=(0.01, 0.01, 0.99, 0.99), num_shadows_limit=(1, 4), shadow_dimension=5, shadow_intensity_range=(0.1, 0.6), p=1.0)],
-                                [A.RandomSnow(snow_point_range=(0.01, 0.075), brightness_coeff=2.0, method="bleach", p=1.0)],
+                                [A.RandomSnow(snow_point_range=(0.01, 0.075), brightness_coeff=1.25, method="bleach", p=1.0)],
                                 [A.RandomSunFlare(flare_roi=(0, 0, 1, 1), angle_range=(0.25, 0.75), num_flare_circles_range=(10, 15), src_radius=400, src_color=(255, 200, 200), method="physics_based", p=1.0)],
                                 [A.PlasmaShadow(shadow_intensity_range=(0.5, 0.9), roughness=0.3, p=1.0)],
                                 [A.CoarseDropout(num_holes_range=(3, 6), hole_height_range=(0.05, 0.1), hole_width_range=(0.05, 0.1), p=1.0)],
@@ -134,12 +134,20 @@ def apply_transformations(combinaison, picture, output_dir, index, hauteur, larg
     if len(combinaison) >1:
         if 'Transpose' in str(combinaison[0][0]) and 'Crop' in str(combinaison[1][0]):
             if 'Center' in str(combinaison[1][0]):
-                combinaison[1][0] = A.CenterCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
+                combinaison[1][0] = A.CenterCrop(height=max(2, int(largeur*0.75)), width=max(2, int(hauteur*0.75)), p=1.0)
             else :
-                combinaison[1][0] = A.RandomCrop(height=int(largeur*0.75), width=int(hauteur*0.75), p=1.0)
+                combinaison[1][0] = A.RandomCrop(height=max(2, int(largeur*0.75)), width=max(2, int(hauteur*0.75)), p=1.0)
     for list_transform in combinaison :
         for transform in list_transform:
-            augmented_image = transform(image=augmented_image)["image"]
+            try:
+                augmented_image = transform(image=augmented_image)["image"]
+            except Exception as e:
+                print(f"Erreur lors de l'application de {transform}: {e}")
+                return
+            #vérification de la taille de l'image après chaque transformation
+            if augmented_image.shape[0] < 1 or augmented_image.shape[1] < 1:
+                print(f"Image devenue trop petite: {augmented_image.shape}. Transformation annulée.")
+                return
     output_image_path = os.path.join(output_dir, f"{name}_augmented_{index}.jpg")
     cv2.imwrite(output_image_path, augmented_image)
 
